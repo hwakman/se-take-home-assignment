@@ -46,16 +46,30 @@ func TestOrderService_Extra(t *testing.T) {
 	// Test GetQueue before bot starts
 	assert.Equal(t, 1, len(s.GetQueue()))
 
-	// Test SetBotCount and GetBots
-	s.SetBotCount(1)
-	assert.Equal(t, 1, len(s.GetBots()))
+	// Simulate bot picking up the order (Pop from queue, then process)
+	popped := s.queue.Pop()
+	assert.Equal(t, order.ID, popped.ID)
+	assert.Equal(t, 0, len(s.GetQueue()))
 
-	// Test callbacks (manually trigger to ensure coverage)
+	// Test callbacks manually (without bots to avoid race conditions)
 	s.HandleOrderStart(order, 1)
 	s.HandleOrderComplete(order)
 	assert.Equal(t, domain.OrderStatusComplete, order.Status)
 
+	// Create another order and test cancellation (returns it to queue)
 	order2 := s.CreateOrder("Bob", domain.OrderTypeNormal)
+	assert.Equal(t, 1, len(s.GetQueue()))
+	
+	// Pop Bob to simulate bot picking it up
+	s.queue.Pop()
+	assert.Equal(t, 0, len(s.GetQueue()))
+
+	// Cancel Bob (simulates bot being removed mid-processing → order returns to queue)
 	s.HandleOrderCancelled(order2)
-	assert.Equal(t, 2, len(s.GetQueue()))
+	assert.Equal(t, 1, len(s.GetQueue()))
+
+	// Test SetBotCount and GetBots separately (no pending work to cause races)
+	s2 := NewOrderService()
+	s2.SetBotCount(1)
+	assert.Equal(t, 1, len(s2.GetBots()))
 }
