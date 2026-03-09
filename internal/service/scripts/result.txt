@@ -1,0 +1,7 @@
+McDonald's Order Management System - Simulation Results
+
+[23:26:19] Created normal Order #1 - Status: PENDING
+[23:26:19] Created normal Order #1 - Status: PENDING
+[23:26:19] Bot #1 picked up normal Order #1 - Status: PROCESSING
+[23:26:19] Bot completed normal Order #1 - Status: COMPLETE (Processing time: 10s)
+[23:26:19] Created normal Order #2 - Status: PENDING

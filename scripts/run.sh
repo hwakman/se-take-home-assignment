@@ -1,11 +1,19 @@
 #!/bin/bash
 set -e
 
-# Load nvm if it exists
+# Load nvm if it exists (for local development)
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-# Function to handle cleanup on script exit
+# CI mode: run the CLI binary and generate result.txt
+if [ "$CI" = "true" ]; then
+    echo "Running CLI application..."
+    ./order-controller
+    echo "CLI application execution completed"
+    exit 0
+fi
+
+# Local dev mode: start both backend and frontend
 cleanup() {
     echo ""
     echo "Shutting down servers..."
@@ -13,20 +21,16 @@ cleanup() {
     exit
 }
 
-# Trap SIGINT (Ctrl+C) and SIGTERM
 trap cleanup SIGINT SIGTERM
 
 echo "Starting McDonald's Order System..."
 
-# 1. Start backend
 echo "Starting Backend (Go API) on :8080..."
 go run cmd/api/main.go &
 BACKEND_PID=$!
 
-# 2. Wait a bit for backend to start up
 sleep 2
 
-# 3. Start frontend
 echo "Starting Frontend (Next.js) on :3000..."
 cd frontend && npm run dev &
 FRONTEND_PID=$!
@@ -38,5 +42,4 @@ echo "Frontend: http://localhost:3000"
 echo "Press Ctrl+C to stop both servers."
 echo "------------------------------------------------"
 
-# Keep the script running
 wait $BACKEND_PID $FRONTEND_PID
